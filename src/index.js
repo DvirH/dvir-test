@@ -7,3 +7,9 @@ export const slugify = (str) =>
     .replace(/[^a-z0-9\s-]/g, "")
     .trim()
     .replace(/\s+/g, "-");
+
+// titleCase: capitalize the first letter of each word.
+export const titleCase = (str) =>
+  String(str)
+    .toLowerCase()
+    .replace(/\b\w/g, (c) => c.toUpperCase());
