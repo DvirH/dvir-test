@@ -13,3 +13,6 @@ export const titleCase = (str) =>
   String(str)
     .toLowerCase()
     .replace(/\b\w/g, (c) => c.toUpperCase());
+
+// reverse: return the string reversed.
+export const reverse = (str) => String(str).split("").reverse().join("");

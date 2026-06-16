@@ -23,3 +23,11 @@
 
 ### Notes
 - Example: `titleCase("hello world")` returns `Hello World`.
+
+## reverse
+
+### What it does
+- Returns the text with its characters in reverse order.
+
+### Notes
+- Example: `reverse("abc")` returns `cba`.
