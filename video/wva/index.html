@@ -1,0 +1,389 @@
+<!doctype html>
+<html lang="en" data-resolution="landscape">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <script src="vendor/gsap.min.js"></script>
+    <style>
+      @font-face { font-family: "Inter Display"; src: local("Inter Display"); font-weight: 100 900; }
+      @font-face { font-family: "Inter"; src: local("Inter"); font-weight: 100 900; }
+      @font-face { font-family: "JetBrains Mono"; src: local("JetBrains Mono"); font-weight: 100 900; }
+      :root {
+        --ground: #14120f;
+        --panel: #1f1c18;
+        --line: #3a352e;
+        --ink: #f3eee4;
+        --muted: #a39b8d;
+        --wf: #7fb0d9; /* workflow blue */
+        --ag: #e08a63; /* agent clay */
+        --ok: #9cc58f;
+        --font-display: "Inter Display", "Inter", sans-serif;
+        --font-body: "Inter", sans-serif;
+        --font-mono: "JetBrains Mono", monospace;
+      }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body {
+        width: 1920px; height: 1080px; overflow: hidden;
+        background: var(--ground); color: var(--ink);
+        font-family: var(--font-body);
+      }
+      #root { position: relative; width: 1920px; height: 1080px; }
+      .clip { position: absolute; inset: 0; width: 1920px; height: 1080px; }
+      .abs { position: absolute; }
+      .chip {
+        display: inline-block; font-family: var(--font-mono); font-size: 28px;
+        letter-spacing: 0.08em; text-transform: uppercase; padding: 10px 22px;
+        border-radius: 999px; border: 2px solid currentColor;
+      }
+      .h1 { font-family: var(--font-display); font-weight: 700; letter-spacing: -0.035em; line-height: 1.02; }
+      .h2 { font-family: var(--font-display); font-weight: 650; letter-spacing: -0.03em; line-height: 1.08; }
+      .body { font-size: 34px; line-height: 1.4; color: var(--muted); }
+      .wf { color: var(--wf); }
+      .ag { color: var(--ag); }
+
+      /* global frame */
+      #progress-track { position: absolute; left: 0; bottom: 0; width: 1920px; height: 8px; background: #221f1a; z-index: 50; }
+      #progress { position: absolute; left: 0; bottom: 0; width: 1920px; height: 8px; background: linear-gradient(90deg, var(--wf), var(--ag)); transform-origin: 0 50%; z-index: 51; }
+      #brand { position: absolute; left: 80px; top: 56px; font-family: var(--font-mono); font-size: 22px; color: var(--muted); letter-spacing: 0.1em; z-index: 50; }
+
+      /* S1 title */
+      #s1-title { left: 0; width: 1920px; top: 330px; text-align: center; font-size: 168px; }
+      #s1-vs { color: var(--muted); font-weight: 400; font-style: italic; }
+      #s1-sub { left: 0; width: 1920px; top: 590px; text-align: center; font-size: 42px; color: var(--muted); }
+      #s1-bar-l, #s1-bar-r { top: 700px; height: 6px; width: 300px; border-radius: 3px; }
+      #s1-bar-l { left: 650px; background: var(--wf); transform-origin: 100% 50%; }
+      #s1-bar-r { left: 970px; background: var(--ag); transform-origin: 0 50%; }
+
+      /* S2 workflow */
+      .node {
+        position: absolute; width: 260px; height: 130px; border-radius: 22px;
+        background: var(--panel); border: 2px solid var(--line);
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        text-align: center;
+      }
+      .node .k { font-family: var(--font-mono); font-size: 20px; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 8px; }
+      .node .v { font-size: 30px; font-weight: 600; }
+      .node .glow { position: absolute; inset: -2px; border-radius: 22px; border: 3px solid var(--wf); background: rgba(127,176,217,0.12); opacity: 0; }
+      .arrow { position: absolute; height: 3px; background: var(--line); transform-origin: 0 50%; }
+      .arrow::after { content: ""; position: absolute; right: -2px; top: -8px; border-left: 16px solid var(--line); border-top: 9px solid transparent; border-bottom: 9px solid transparent; }
+      .dot { position: absolute; width: 26px; height: 26px; border-radius: 50%; }
+      #s2-dot { background: var(--wf); box-shadow: 0 0 24px var(--wf); left: 267px; top: 667px; opacity: 0; }
+
+      /* S3 patterns */
+      .card {
+        position: absolute; top: 360px; width: 380px; height: 540px; border-radius: 28px;
+        background: var(--panel); border: 2px solid var(--line); padding: 36px;
+      }
+      .card svg { width: 308px; height: 200px; display: block; margin-bottom: 26px; }
+      .card .t { font-family: var(--font-display); font-size: 36px; font-weight: 650; letter-spacing: -0.02em; margin-bottom: 12px; }
+      .card .d { font-size: 26px; line-height: 1.38; color: var(--muted); }
+
+      /* S4 agent */
+      #s4-ring { left: 1080px; top: 330px; width: 520px; height: 520px; border-radius: 50%; border: 3px dashed var(--line); }
+      #s4-core {
+        left: 1240px; top: 490px; width: 200px; height: 200px; border-radius: 50%;
+        background: rgba(224,138,99,0.14); border: 3px solid var(--ag);
+        display: flex; align-items: center; justify-content: center; font-family: var(--font-display);
+        font-weight: 700; font-size: 40px; color: var(--ag);
+      }
+      .lnode {
+        position: absolute; width: 190px; height: 74px; border-radius: 40px; background: var(--panel);
+        border: 2px solid var(--line); display: flex; align-items: center; justify-content: center;
+        font-size: 30px; font-weight: 600;
+      }
+      #s4-orbit { left: 1340px; top: 590px; width: 0; height: 0; }
+      #s4-dot { left: -14px; top: -274px; background: var(--ag); box-shadow: 0 0 26px var(--ag); width: 28px; height: 28px; }
+      .tool {
+        position: absolute; font-family: var(--font-mono); font-size: 26px; padding: 10px 18px; border-radius: 12px;
+        background: #26221d; border: 1.5px solid var(--line); color: var(--ink);
+      }
+      .tick { font-size: 28px; color: var(--muted); font-family: var(--font-mono); }
+      .tick b { color: var(--ag); font-weight: 700; }
+
+      /* S5 compare */
+      #s5-table { left: 160px; top: 270px; width: 1600px; }
+      .row { position: relative; display: flex; height: 104px; align-items: center; border-bottom: 2px solid var(--line); }
+      .row.head { height: 90px; border-bottom: 3px solid var(--ink); }
+      .row .c0 { width: 560px; font-size: 32px; color: var(--muted); }
+      .row .c1, .row .c2 { width: 520px; font-size: 36px; font-weight: 600; }
+      .row.head .c1, .row.head .c2 { font-family: var(--font-display); font-size: 46px; font-weight: 700; letter-spacing: -0.02em; }
+
+      /* S6 decide */
+      #s6-q {
+        left: 460px; top: 210px; width: 1000px; height: 160px; border-radius: 28px; background: var(--panel);
+        border: 2px solid var(--ink); display: flex; align-items: center; justify-content: center; text-align: center;
+        font-family: var(--font-display); font-size: 48px; font-weight: 650; letter-spacing: -0.02em; padding: 0 40px;
+      }
+      .vline { position: absolute; width: 4px; background: var(--line); transform-origin: 50% 0; }
+      .hline { position: absolute; height: 4px; background: var(--line); }
+      .ans {
+        position: absolute; width: 640px; height: 230px; border-radius: 28px; padding: 34px 40px;
+        background: var(--panel); border: 3px solid currentColor;
+      }
+      .ans .t { font-family: var(--font-display); font-size: 56px; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 10px; }
+      .ans .d { font-size: 28px; line-height: 1.35; color: var(--muted); }
+      .lab { position: absolute; font-family: var(--font-mono); font-size: 26px; letter-spacing: 0.06em; }
+
+      /* S7 takeaway */
+      #s7-line1 { left: 0; width: 1920px; top: 330px; text-align: center; font-size: 96px; }
+      #s7-line2 { left: 0; width: 1920px; top: 470px; text-align: center; font-size: 96px; }
+      #s7-spec { left: 460px; top: 700px; width: 1000px; height: 10px; border-radius: 5px; background: linear-gradient(90deg, var(--wf), var(--ag)); transform-origin: 0 50%; }
+      #s7-l { left: 460px; top: 735px; font-family: var(--font-mono); font-size: 26px; color: var(--wf); }
+      #s7-r { left: 1460px; top: 735px; font-family: var(--font-mono); font-size: 26px; color: var(--ag); transform: translateX(-100%); }
+      #s7-knob { left: 470px; top: 688px; width: 34px; height: 34px; border-radius: 50%; background: var(--ink); border: 5px solid var(--ground); }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="68" data-width="1920" data-height="1080">
+
+      <!-- ============ S1: TITLE (0 - 6) ============ -->
+      <div id="s1" class="clip" data-start="0" data-duration="6" data-track-index="0">
+        <div id="s1-title" class="abs h1"><span class="wf">Workflows</span> <span id="s1-vs">vs</span> <span class="ag">Agents</span></div>
+        <div id="s1-sub" class="abs">Two ways to build with Claude, and how to choose</div>
+        <div id="s1-bar-l" class="abs"></div>
+        <div id="s1-bar-r" class="abs"></div>
+      </div>
+
+      <!-- ============ S2: WORKFLOW (6 - 17) ============ -->
+      <div id="s2" class="clip" data-start="6" data-duration="11" data-track-index="0">
+        <div id="s2-chip" class="abs chip wf" style="left:150px; top:170px;">Workflow</div>
+        <div id="s2-head" class="abs h2" style="left:150px; top:250px; font-size:76px; width:1600px;">Predefined steps. <span class="wf">Your code</span> is in charge.</div>
+        <div id="s2-body" class="abs body" style="left:150px; top:360px; width:1500px;">You know the steps in advance, so you hard-code them. Claude does the work inside each step.</div>
+
+        <div class="arrow s2-ar" style="left:415px; top:679px; width:70px;"></div>
+        <div class="arrow s2-ar" style="left:755px; top:679px; width:70px;"></div>
+        <div class="arrow s2-ar" style="left:1095px; top:679px; width:70px;"></div>
+        <div class="arrow s2-ar" style="left:1435px; top:679px; width:70px;"></div>
+
+        <div class="node s2-n" style="left:150px; top:615px;"><div class="glow"></div><div class="k">Input</div><div class="v">Support email</div></div>
+        <div class="node s2-n" style="left:490px; top:615px;"><div class="glow"></div><div class="k">Step 1 · Claude</div><div class="v">Extract details</div></div>
+        <div class="node s2-n" style="left:830px; top:615px;"><div class="glow"></div><div class="k">Step 2 · Claude</div><div class="v">Classify issue</div></div>
+        <div class="node s2-n" style="left:1170px; top:615px;"><div class="glow"></div><div class="k">Step 3 · Code</div><div class="v">Validate</div></div>
+        <div class="node s2-n" style="left:1510px; top:615px;"><div class="glow"></div><div class="k">Output</div><div class="v">Tagged ticket</div></div>
+        <div id="s2-dot" class="dot"></div>
+
+        <div id="s2-foot" class="abs" style="left:150px; top:850px; font-size:30px; color:var(--muted);">Same path, every time → <span class="wf" style="font-weight:600;">predictable, testable, easy to debug.</span></div>
+      </div>
+
+      <!-- ============ S3: WORKFLOW PATTERNS (17 - 28) ============ -->
+      <div id="s3" class="clip" data-start="17" data-duration="11" data-track-index="0">
+        <div id="s3-chip" class="abs chip wf" style="left:150px; top:150px;">Workflow patterns</div>
+        <div id="s3-head" class="abs h2" style="left:150px; top:230px; font-size:64px;">Four common shapes</div>
+
+        <div class="card s3-c" style="left:150px;">
+          <svg viewBox="0 0 328 200">
+            <rect x="8" y="80" width="80" height="44" rx="10" fill="none" stroke="#7fb0d9" stroke-width="3"/>
+            <rect x="124" y="80" width="80" height="44" rx="10" fill="none" stroke="#7fb0d9" stroke-width="3"/>
+            <rect x="240" y="80" width="80" height="44" rx="10" fill="none" stroke="#7fb0d9" stroke-width="3"/>
+            <path d="M92 102 H118 M208 102 H234" stroke="#a39b8d" stroke-width="3"/>
+            <path d="M112 95 L120 102 L112 109 M228 95 L236 102 L228 109" fill="none" stroke="#a39b8d" stroke-width="3"/>
+          </svg>
+          <div class="t">Chaining</div>
+          <div class="d">Break a task into steps. Each call's output feeds the next one.</div>
+        </div>
+
+        <div class="card s3-c" style="left:570px;">
+          <svg viewBox="0 0 328 200">
+            <rect x="8" y="78" width="80" height="44" rx="10" fill="none" stroke="#7fb0d9" stroke-width="3"/>
+            <rect x="236" y="14" width="84" height="40" rx="10" fill="#7fb0d9" fill-opacity="0.25" stroke="#7fb0d9" stroke-width="3"/>
+            <rect x="236" y="80" width="84" height="40" rx="10" fill="none" stroke="#3a352e" stroke-width="3"/>
+            <rect x="236" y="146" width="84" height="40" rx="10" fill="none" stroke="#3a352e" stroke-width="3"/>
+            <path d="M92 100 L232 34" stroke="#7fb0d9" stroke-width="3"/>
+            <path d="M92 100 L232 100 M92 100 L232 166" stroke="#3a352e" stroke-width="3"/>
+          </svg>
+          <div class="t">Routing</div>
+          <div class="d">Classify the input, then send it down the specialized path.</div>
+        </div>
+
+        <div class="card s3-c" style="left:990px;">
+          <svg viewBox="0 0 328 200">
+            <rect x="8" y="78" width="64" height="44" rx="10" fill="none" stroke="#7fb0d9" stroke-width="3"/>
+            <rect x="132" y="14" width="64" height="40" rx="10" fill="none" stroke="#7fb0d9" stroke-width="3"/>
+            <rect x="132" y="80" width="64" height="40" rx="10" fill="none" stroke="#7fb0d9" stroke-width="3"/>
+            <rect x="132" y="146" width="64" height="40" rx="10" fill="none" stroke="#7fb0d9" stroke-width="3"/>
+            <rect x="256" y="78" width="64" height="44" rx="10" fill="none" stroke="#7fb0d9" stroke-width="3"/>
+            <path d="M74 100 L128 34 M74 100 L128 100 M74 100 L128 166 M200 34 L252 100 M200 100 L252 100 M200 166 L252 100" stroke="#a39b8d" stroke-width="3"/>
+          </svg>
+          <div class="t">Parallelization</div>
+          <div class="d">Run several calls at once, then merge or vote on the results.</div>
+        </div>
+
+        <div class="card s3-c" style="left:1410px;">
+          <svg viewBox="0 0 328 200">
+            <rect x="8" y="78" width="110" height="44" rx="10" fill="none" stroke="#7fb0d9" stroke-width="3"/>
+            <rect x="210" y="78" width="110" height="44" rx="10" fill="none" stroke="#9cc58f" stroke-width="3"/>
+            <text x="63" y="107" fill="#f3eee4" font-size="18" text-anchor="middle" font-family="JetBrains Mono">draft</text>
+            <text x="265" y="107" fill="#f3eee4" font-size="18" text-anchor="middle" font-family="JetBrains Mono">grade</text>
+            <path d="M63 74 C63 20 265 20 265 74" fill="none" stroke="#a39b8d" stroke-width="3"/>
+            <path d="M265 126 C265 180 63 180 63 126" fill="none" stroke="#a39b8d" stroke-width="3"/>
+            <path d="M257 64 L265 75 L273 64 M55 136 L63 125 L71 136" fill="none" stroke="#a39b8d" stroke-width="3"/>
+          </svg>
+          <div class="t">Evaluator–optimizer</div>
+          <div class="d">One call drafts, another grades it. Repeat until it passes.</div>
+        </div>
+      </div>
+
+      <!-- ============ S4: AGENT (28 - 41) ============ -->
+      <div id="s4" class="clip" data-start="28" data-duration="13" data-track-index="0">
+        <div id="s4-chip" class="abs chip ag" style="left:150px; top:200px;">Agent</div>
+        <div id="s4-head" class="abs h2" style="left:150px; top:280px; font-size:76px; width:860px;">A goal and some tools. <span class="ag">Claude</span> is in charge.</div>
+        <div id="s4-body" class="abs body" style="left:150px; top:480px; width:820px;">You don't script the steps. Claude decides what to do next, uses a tool, looks at the result, and keeps going.</div>
+        <div id="s4-ex" class="abs" style="left:150px; top:680px; width:820px; font-size:28px; line-height:1.45; color:var(--ink);">
+          <span class="ag" style="font-family:var(--font-mono); font-size:22px; letter-spacing:0.08em;">EXAMPLE</span><br/>
+          “Fix the failing test.” Claude reads files, runs the tests, edits code, and repeats until they pass.
+        </div>
+
+        <div id="s4-ring" class="abs"></div>
+        <div id="s4-core" class="abs">Claude</div>
+        <div id="s4-orbit" class="abs"><div id="s4-dot" class="dot"></div></div>
+        <div class="lnode s4-ln" style="left:1245px; top:279px;">Think</div>
+        <div class="lnode s4-ln" style="left:1480px; top:690px;">Act</div>
+        <div class="lnode s4-ln" style="left:1010px; top:690px;">Observe</div>
+
+        <div class="tool s4-t" style="left:1660px; top:600px;">search</div>
+        <div class="tool s4-t" style="left:1680px; top:800px;">run code</div>
+        <div class="tool s4-t" style="left:1500px; top:870px;">edit files</div>
+
+        <div class="abs tick" id="s4-k1" style="left:1080px; top:920px;">loop <b>1</b></div>
+        <div class="abs tick" id="s4-k2" style="left:1080px; top:920px;">loop <b>2</b></div>
+        <div class="abs tick" id="s4-k3" style="left:1080px; top:920px;">loop <b>3</b> · <span style="color:var(--ok);">goal met ✓</span></div>
+      </div>
+
+      <!-- ============ S5: COMPARE (41 - 53) ============ -->
+      <div id="s5" class="clip" data-start="41" data-duration="12" data-track-index="0">
+        <div id="s5-head" class="abs h2" style="left:160px; top:150px; font-size:64px;">Side by side</div>
+        <div id="s5-table" class="abs">
+          <div class="row head s5-r"><div class="c0"></div><div class="c1 wf">Workflow</div><div class="c2 ag">Agent</div></div>
+          <div class="row s5-r"><div class="c0">Who picks the steps</div><div class="c1">Your code</div><div class="c2">Claude</div></div>
+          <div class="row s5-r"><div class="c0">Predictability</div><div class="c1">High</div><div class="c2">Lower</div></div>
+          <div class="row s5-r"><div class="c0">Flexibility</div><div class="c1">Limited to the plan</div><div class="c2">Adapts as it goes</div></div>
+          <div class="row s5-r"><div class="c0">Testing &amp; debugging</div><div class="c1">Straightforward</div><div class="c2">Harder</div></div>
+          <div class="row s5-r"><div class="c0">Cost &amp; latency</div><div class="c1">Bounded</div><div class="c2">Varies per run</div></div>
+          <div class="row s5-r"><div class="c0">Best for</div><div class="c1">Well-defined tasks</div><div class="c2">Open-ended problems</div></div>
+        </div>
+      </div>
+
+      <!-- ============ S6: DECIDE (53 - 62) ============ -->
+      <div id="s6" class="clip" data-start="53" data-duration="9" data-track-index="0">
+        <div id="s6-q" class="abs">Can you write down the steps in advance?</div>
+        <div class="vline s6-v0" style="left:958px; top:370px; height:90px;"></div>
+        <div class="hline s6-h" style="left:500px; top:458px; width:920px;"></div>
+        <div class="vline s6-v1" style="left:498px; top:458px; height:150px;"></div>
+        <div class="vline s6-v2" style="left:1418px; top:458px; height:150px;"></div>
+        <div class="lab wf s6-l1" style="left:530px; top:500px;">YES</div>
+        <div class="lab ag s6-l2" style="left:1340px; top:500px;">NO</div>
+        <div class="ans wf s6-a1" style="left:180px; top:608px;">
+          <div class="t">Use a workflow</div>
+          <div class="d">You get reliability and repeatable results at a known cost.</div>
+        </div>
+        <div class="ans ag s6-a2" style="left:1100px; top:608px;">
+          <div class="t">Use an agent</div>
+          <div class="d">The path depends on what Claude finds along the way.</div>
+        </div>
+      </div>
+
+      <!-- ============ S7: TAKEAWAY (62 - 68) ============ -->
+      <div id="s7" class="clip" data-start="62" data-duration="6" data-track-index="0">
+        <div id="s7-line1" class="abs h1">Start with a <span class="wf">workflow.</span></div>
+        <div id="s7-line2" class="abs h1">Reach for an <span class="ag">agent</span> when you need it.</div>
+        <div id="s7-spec" class="abs"></div>
+        <div id="s7-knob" class="abs"></div>
+        <div id="s7-l" class="abs">RELIABILITY</div>
+        <div id="s7-r" class="abs">FLEXIBILITY</div>
+      </div>
+
+      <div id="brand">BUILDING WITH THE CLAUDE API</div>
+      <div id="progress-track"></div>
+      <div id="progress"></div>
+    </div>
+
+    <script>
+      window.__timelines = window.__timelines || {};
+      const tl = gsap.timeline({ paused: true });
+      const E = "power3.out";
+
+      // global progress bar
+      tl.fromTo("#progress", { scaleX: 0 }, { scaleX: 1, duration: 68, ease: "none" }, 0);
+
+      // helper: scene fade out
+      const out = (sel, t) => tl.to(sel, { opacity: 0, duration: 0.4, ease: "power2.in" }, t);
+
+      // ---------- S1 ----------
+      tl.fromTo("#s1-title", { opacity: 0, y: 40 }, { opacity: 1, y: 0, duration: 0.9, ease: E }, 0.3);
+      tl.fromTo("#s1-sub", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.7, ease: E }, 1.0);
+      tl.fromTo(["#s1-bar-l", "#s1-bar-r"], { scaleX: 0 }, { scaleX: 1, duration: 0.8, ease: E }, 1.4);
+      out("#s1", 5.6);
+
+      // ---------- S2 ----------
+      tl.fromTo("#s2-chip", { opacity: 0, x: -30 }, { opacity: 1, x: 0, duration: 0.5, ease: E }, 6.2);
+      tl.fromTo("#s2-head", { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.7, ease: E }, 6.4);
+      tl.fromTo("#s2-body", { opacity: 0 }, { opacity: 1, duration: 0.6 }, 7.0);
+      tl.fromTo(".s2-n", { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.5, stagger: 0.18, ease: E }, 7.6);
+      tl.fromTo(".s2-ar", { scaleX: 0 }, { scaleX: 1, duration: 0.3, stagger: 0.18, ease: E }, 7.9);
+      // dot travels the fixed path, lighting each node
+      tl.set("#s2-dot", { opacity: 1 }, 9.4);
+      const nodeX = [267, 607, 947, 1287, 1627];
+      const glows = gsap.utils.toArray("#s2 .glow");
+      tl.to(glows[0], { opacity: 1, duration: 0.2 }, 9.4);
+      for (let i = 1; i < 5; i++) {
+        const t = 9.4 + i * 0.9;
+        tl.to("#s2-dot", { x: nodeX[i] - 267, duration: 0.7, ease: "power1.inOut" }, t - 0.7);
+        tl.to(glows[i], { opacity: 1, duration: 0.2 }, t);
+      }
+      tl.fromTo("#s2-foot", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.6, ease: E }, 13.6);
+      out("#s2", 16.6);
+
+      // ---------- S3 ----------
+      tl.fromTo("#s3-chip", { opacity: 0, x: -30 }, { opacity: 1, x: 0, duration: 0.5, ease: E }, 17.2);
+      tl.fromTo("#s3-head", { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.6, ease: E }, 17.4);
+      tl.fromTo(".s3-c", { opacity: 0, y: 60 }, { opacity: 1, y: 0, duration: 0.7, stagger: 1.4, ease: E }, 18.2);
+      out("#s3", 27.6);
+
+      // ---------- S4 ----------
+      tl.fromTo("#s4-chip", { opacity: 0, x: -30 }, { opacity: 1, x: 0, duration: 0.5, ease: E }, 28.2);
+      tl.fromTo("#s4-head", { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.7, ease: E }, 28.4);
+      tl.fromTo("#s4-body", { opacity: 0 }, { opacity: 1, duration: 0.6 }, 29.2);
+      tl.fromTo(["#s4-ring", "#s4-core"], { opacity: 0, scale: 0.85 }, { opacity: 1, scale: 1, duration: 0.7, ease: E }, 29.4);
+      tl.fromTo(".s4-ln", { opacity: 0, scale: 0.8 }, { opacity: 1, scale: 1, duration: 0.45, stagger: 0.2, ease: "back.out(1.6)" }, 30.0);
+      tl.fromTo(".s4-t", { opacity: 0, x: 20 }, { opacity: 1, x: 0, duration: 0.45, stagger: 0.15, ease: E }, 30.8);
+      tl.fromTo("#s4-dot", { opacity: 0 }, { opacity: 1, duration: 0.3 }, 31.4);
+      // three laps around Think -> Act -> Observe
+      tl.fromTo("#s4-orbit", { rotation: 0 }, { rotation: 1080, duration: 7.2, ease: "none" }, 31.6);
+      tl.fromTo("#s4-k1", { opacity: 0 }, { opacity: 1, duration: 0.2 }, 31.6);
+      tl.to("#s4-k1", { opacity: 0, duration: 0.2 }, 33.8);
+      tl.fromTo("#s4-k2", { opacity: 0 }, { opacity: 1, duration: 0.2 }, 34.0);
+      tl.to("#s4-k2", { opacity: 0, duration: 0.2 }, 36.2);
+      tl.fromTo("#s4-k3", { opacity: 0 }, { opacity: 1, duration: 0.2 }, 36.4);
+      tl.fromTo("#s4-ex", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.6, ease: E }, 33.0);
+      tl.to("#s4-core", { scale: 1.08, duration: 0.3, yoyo: true, repeat: 1, ease: "power2.inOut" }, 38.8);
+      out("#s4", 40.6);
+
+      // ---------- S5 ----------
+      tl.fromTo("#s5-head", { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.6, ease: E }, 41.2);
+      tl.fromTo(".s5-r", { opacity: 0, x: -40 }, { opacity: 1, x: 0, duration: 0.5, stagger: 1.0, ease: E }, 41.8);
+      out("#s5", 52.6);
+
+      // ---------- S6 ----------
+      tl.fromTo("#s6-q", { opacity: 0, y: -30 }, { opacity: 1, y: 0, duration: 0.6, ease: E }, 53.2);
+      tl.fromTo(".s6-v0", { scaleY: 0 }, { scaleY: 1, duration: 0.3, ease: "none" }, 54.4);
+      tl.fromTo(".s6-h", { scaleX: 0 }, { scaleX: 1, duration: 0.4, ease: "none" }, 54.7);
+      tl.fromTo([".s6-v1", ".s6-v2"], { scaleY: 0 }, { scaleY: 1, duration: 0.3, ease: "none" }, 55.1);
+      tl.fromTo(".s6-l1", { opacity: 0 }, { opacity: 1, duration: 0.3 }, 55.3);
+      tl.fromTo(".s6-a1", { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.6, ease: E }, 55.5);
+      tl.fromTo(".s6-l2", { opacity: 0 }, { opacity: 1, duration: 0.3 }, 57.0);
+      tl.fromTo(".s6-a2", { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.6, ease: E }, 57.2);
+      out("#s6", 61.6);
+
+      // ---------- S7 ----------
+      tl.fromTo("#s7-line1", { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.7, ease: E }, 62.2);
+      tl.fromTo("#s7-line2", { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.7, ease: E }, 63.0);
+      tl.fromTo("#s7-spec", { scaleX: 0 }, { scaleX: 1, duration: 0.8, ease: E }, 63.6);
+      tl.fromTo(["#s7-l", "#s7-r", "#s7-knob"], { opacity: 0 }, { opacity: 1, duration: 0.4 }, 64.2);
+      tl.fromTo("#s7-knob", { x: 0 }, { x: 170, duration: 1.4, ease: "power2.inOut" }, 64.4);
+      tl.to("#brand", { opacity: 0, duration: 0.6 }, 67.2);
+
+      window.__timelines["main"] = tl;
+      tl.seek(0);
+    </script>
+  </body>
+</html>
